@@ -1,0 +1,26 @@
+<html>
+<head>
+  <title>Email Template ({{emails|length}})</title>
+</head>
+  <body>
+    <h1>Girls Who Code Email Template</h1>
+
+    <ol>
+      {% for email in emails %}
+        {% if email.launched %}
+          <li>
+            <a href="mailto:{{email.advisor_email}}?subject=Your Site Manager for Girls Who Code!
+            &body=Hello {{email.advisor_name}},%0A%0AFirst and foremost,​ congratulations​ on your acceptance to host a Girls Who Code Club at {{email.org_name}}!!​ My name is Georgia Davis and I would like to introduce myself as the Site Manager for your Club.%0AOur records show that your club (#{{email.club_num}}) is approved to launch,  and I am here to support you in your GWC journey for the 2015-2016 academic year.%0A%0AIn order to ensure open lines of communication, when is the best time to reach you to check in? Please let me know if you prefer on the phone, or email.%0A%0AFeel free to email me any changes to your Club, along with any​ questions or concerns. I look forward to an amazing Club experience!%0A%0ABest,%0AGeorgia ">Email {{email.org_name}}</a>
+
+          </li>
+        {% else %}
+          <li>
+            <a href="mailto:{{email.advisor_email}}?subject=Your Site Manager for Girls Who Code!
+            &body=Hello {{email.advisor_name}},%0A%0AFirst and foremost,​ congratulations​ on your acceptance to host a Girls Who Code Club at {{email.org_name}}!!​ My name is Georgia Davis and I would like to introduce myself as the Site Manager for your Club.%0AOur records show that your Club (#{{email.club_num}}) is waiting to launch, and I am here to support you in your GWC journey for Spring 2016.%0A%0AOur team will do their best to place an instructor with each Club, but encourage you to utilize local contacts. While you wait for an instructor to be placed, please utilize our Recruiting Packet, and share the volunteer opportunity with local university CS departments, or any local contacts with technical backgrounds.  Together we will get the Club started!%0A%0AFeel free to email me any changes to your Club, along with any​ questions or concerns. I look forward to an amazing Club experience!%0A%0ABest,%0AGeorgia">Email {{email.org_name}}*</a>
+          </li>
+        {% endif %}
+      {% endfor %}
+    </ol>
+  </body>
+  </body>
+</html>

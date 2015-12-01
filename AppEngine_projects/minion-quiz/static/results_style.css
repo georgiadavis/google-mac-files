@@ -1,0 +1,12 @@
+@import url(http://fonts.googleapis.com/css?family=Lobster+Two);
+
+body{
+   font-family: 'Lobster Two', cursive;
+   background-color: rgb(252,232,118)
+}
+
+.minion_background{
+  position:fixed;
+  bottom:0px;
+  left:40%;
+}

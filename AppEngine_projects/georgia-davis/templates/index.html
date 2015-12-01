@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <title>Carl's Website</title>
+  </head>
+  <body>
+    <h1>All about the Minion Life!</h1>
+    <p>Hi I am Carl! I want to write a blog about my new CSSI friends</p>
+    <form action ="/" method ="post">
+      Post Title: <br>
+    <input type = "text" name = "title" placeholder = "your title"><br>
+    Post Content: <br>
+    <input type = "text" name ="content" placeholder ="your content"> <br>
+    <button> submit </button>
+    {% for post in posts %} <!-- Posts the title and content and timestamp in the main.py -->
+      {{post.title}}<br>
+      {{post.content}}<br>
+      {{post.timestamp}}<br>
+    {% endfor %}
+  </form>
+  </body>
+</html>

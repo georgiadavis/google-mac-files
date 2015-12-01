@@ -1,0 +1,236 @@
+DataBases
+
+Clients make request to the server and the server sends a response back
+What you can do with databases
+    -Create: Query/Read
+    -Read: Put information into it/write
+    -Update: Delete from the database
+    -Delete: Edit/Update Data
+
+Questions to ask yourself:
+What data do I need to represent?
+    a. What do I call it?
+    b. What properties do I call it?
+    c. How does it relate to other models? Always have a key property
+        -One to Many relationship
+        -Many to Many relationship
+        -Key Properties are how we relate models
+
+#------------------------------------------
+Key Properties
+#------------------------------------------
+-Think of key properties as an arrow from one model to another
+-Key lets you get or fetch a full object with properties associated with it
+-Keys are like phone numbers where you can call the object and ask for all of its properties
+-You can also use objects to access the key property
+-Every model has a key, you don't need to define a key. You access it with model.key
+
+URL Safe Key: used to pass sensitive information
+- If you're linking to a page that represents a model in the html template:
+    <a href="/detail?key={{model.key.urslsafe()}}">See details about this model</a>
+-If you are passing a url safe key in a form that you don't want to show the user.
+-Necessary if I am having user edit something related to the model or if I am adding information about the model (like a comment on a blogpost)
+  <form action="/something" method="post">
+    <input type="hidden" name="model_key" value="{{model.key.urlsafe()}}">
+  </form>
+
+#------------------------------------------
+Creating and Reading a Request
+#------------------------------------------
+Three ways a user can create a request:
+1) Click on a link
+2) Submit a form
+3) Type into the url
+
+Three things are handlers doing:
+1) Read the request: self.request.get(key) getting the key from the request
+2) Logic that interacts with the database
+3) Send a response: self.response.write(render(template)) render with data.
+
+Reading the Request:
+If I put this in the url
+  /detail?key={{model.key.urslsafe()}}
+I read the request by
+  self.request.get(key)
+The key on the left is used to get the value on the right
+
+In the Python handler:
+How do we get the key out of the handler out of the request?
+  urlsafe_key=self.request.get('key') #get url safe key from the request
+  product_key= ndb.Key(urlsafe=urlsafe_key) #Turn it into a real key object
+  product= product_key.get() #get the object from the database
+
+#------------------------------------------
+Creating a Model
+#------------------------------------------
+1) Creating a model for product in the python
+  class Product(ndb.Model):
+      productname=ndb.StringProperty()
+      description=ndb.TextProperty()
+      price=ndb.IntegerProperty()
+      sold_out= ndb.BooleanProperty()
+      sell_count= ndb.IntegerProperty() #find popularity of which items are sold the most
+
+2) In my html I will need a form that will have one field for each property that the user(the seller on ebay) needs to supply
+*In general the property variable name should be the same as the name in your html form*
+  <form action="/product" method="post">
+    <input type="text" name="productname">
+    <textarea name="description"></textarea>
+    <input name="price" type="number">
+    <input name="sold_out" type="checkbox" value="1">
+    <button>Submit</button>
+  </form>
+
+3) Back in the Python I will have a handler called something like "ProductHandler"
+    class ProductHandler(webapp2.RequestHandler):
+      def get(self):
+          pass
+      def post(self):
+        1)Read the request from everything in the form
+          name= self.request.get('name')
+          description= self.request.get('description')
+          price= int(self.request.get('price'))
+          sold_out= bool(self.request.get('sold_out'))
+        2)Construct a class for the properties and saves in the database
+          product= Product(name=name,
+                            description=description
+                            price=price
+                            sold_out=sold_out)
+          product.put()
+        3)Send Response
+          self.redirect('/product?key=' + product.key.urlsafe())
+
+#------------------------------------------
+Asking the database to return all the models
+#------------------------------------------
+# => query().fetch()- asking the database and returns a list of models
+# => get()- returns a single model
+# => put() - store in data base
+
+Asking the database to get all of the things of a certain kind. (All the products in the product model)
+
+all_product = Product.query().fetch()
+all_people = Person.query().fetch()
+all_posts = Post.query().fetch()
+
+If I don't want all of the things in a certain kind but want to filter. (All the products that are sold out in the product model)
+* A filter goes in the query to only return certain models
+* A filter always has the form 'Model.property==value'
+available_product= Product.query(Product.sold_out == False).fetch()
+affordable_products= Product.query().fetch(Product.price < 100).fetch()
+post_for_a_user=Post.query(Post.user == current_user).fetch()
+
+#------------------------------------------
+One to Many
+#------------------------------------------
+How do we relate models to one another? One user to many posts
+In a one-to-many relationship, each of the "many" has the key property pointing to the "one"
+This allows us to:
+  a. Get the "one" that owns the "many"
+  b. Get all of the "many" that belong to the one
+
+class Mom(ndb.Model)
+  name = ndb.StringProperty()
+
+class Child(ndb.Model)
+  name= ndb.StringProperty()
+  mom_key= ndb.KeyProperty(kind=Mom)
+  preschool_key = ndb.KeyProperty(kind=Preschool)
+
+a. Get the "one" that owns the "many"
+We are on a page /child?key=...
+We want to show the information about the mom of the child:
+  class ChildHandler(webapp2.RequestHandler):
+    def get(self):
+      child_key_urlsafe= self.request.get('key') #get the url safe key from the url
+      child_key= ndb.Key(urlsafe=child_key_urlsafe) #construct a key from the urlsafe key
+      child= child_key.get() # we are getting the full child object
+      mom_key= child.mom_key #
+      mom = mom_key.get() #
+
+What if we are on the /mom?key=...
+And we want to show the information about the mom of the child:
+  class MomHandler(webapp2.RequestHandler):
+    def get(self):
+      mom_key_urlsafe=self.request.get('key') #get the url safe key from the url
+      mom_key= ndb.Key(urlsafe=mom_key_urlsafe) #construct a key from the urlsafe key
+      mom = mom_key.get() #we are getting the full mom object
+      children = Child.query(Child.mom_key=mom_key).fetch() #get all the children for the mom using a query by filtering the mom.key that identifies the mom. We want to compare keys with keys  
+
+#------------------------------------------
+#Catherine is my home girl :) <3
+#------------------------------------------
+
+
+#Ebay example
+
+#class Bid(ndb.Model):
+#   product_key =ndb.KeyProperty(kind=Product)
+
+# class ProductHandler(webapp2.RequestHandler)
+    #def get(self):
+      #1 Read the request
+         #item_id=self.request.get('item')
+      #2 Logic/interact with the DB three ways to create a keys. Why do we need to make keys? Keys can only communicate with keys
+        #item_key=ndb.Key(Product, item_id)
+        #bids= Bid.query(product_key== item_key).fetch() we need to filter these bids by matching the bids product key with the item key
+     #3 Send a response.
+        # template= env.get_template('bid-page.html')
+        # template_values={"bids":bids, "items": item}
+        # self.response.write(template.render(template_values))
+
+# One to One Relationship
+# from google.appengine.ext import ndb
+#
+# class Team(ndb.Model):
+#  name = ndb.StringProperty()
+#
+# class Player(ndb.Model):
+#  name = ndb.StringProperty()
+#  team = ndb.KeyProperty(kind=Team)
+#
+# warriors_key = ndb.Key(Team,'warriors")
+#
+# warriors= Team(name="Warriors", id="warriors")
+# warriors.put()
+#
+#Adds new player named curry
+# curry = Player(name="Stephen Curry", team= warriors.key, id="curry")
+# curry.put()
+
+#One to Many relationship adds a new player
+# thompson = Player(name="Klay Thompson", team= warriors_key, id="thompson")
+# thompson.put()
+
+#Many to Many relationships multiple products and buyers
+# from google.appengine.ext import ndb
+#
+# class Product(ndb.Model):
+#  name= ndb.StringProperty()
+#
+# class Buyer(ndb.Model):
+#  name= ndb. StringProperty()
+#
+# class ProductBuyer(ndb.Model):
+#  product= ndb.KeyProperty (kind=Product)
+#  buyer= ndb.KeyProperty (kind=Buyer)
+#
+# projector= Product(name= "Projector", id="projector")
+# projector.put()
+# screen= Product(name= "Screen", id="screen")
+# screen.put()
+#
+# georgia= Buyer(name="Georgia", id="georgia")
+# georgia.put()
+# carter= Buyer(name="Carter", id="carter")
+# carter.put()
+#
+# ProductBuyer(product=screen.key, buyer=carter.key).put()
+# ProductBuyer(product=screen.key,
+# buyer=georgia.key).put()
+# ProductBuyer(product=projector,key,
+# buyer=georgia.key).put()
+#
+# Search for all the product buyers
+# screen_key=nbd.Key(Product, "screen")
+# screen_buyer=PRoductBuyer.query(ProductBuyer.product == screen_key).fetch()
